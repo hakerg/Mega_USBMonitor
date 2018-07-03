@@ -38,62 +38,61 @@ void loop() {
 	uint16_t x, y, size;
 	uint8_t mode;
 
-	while (Serial.available() < 5)
-	{
-		if (millis() >= timeToSendTouch)
-		{
-			timeToSendTouch += 100;
-			int16_t data[2];
-			if (ts.dataAvailable())
-			{
-				ts.read();
-				data[0] = ts.TP_X;
-				data[1] = ts.TP_Y;
-			}
-			else
-			{
-				data[0] = -1;
-				data[1] = -1;
-			}
-			Serial.write((uint8_t*)data, 4);
-		}
-	}
-
+	while (Serial.available() < 1);
 	mode = Serial.read();
-	x = Serial.read() + Serial.read() * 256;
-	y = Serial.read();
-	size = Serial.read() + 1;
 
-
-	if (mode == 0)
+	if (mode == 128)
 	{
-		while (Serial.available() < 2);
-		tft.fillRect(x, y, size, size, Serial.read() + Serial.read() * 256);
-	}
-	else
-	{
-		if (mode == 1)
+		int16_t data[2];
+		if (ts.dataAvailable())
 		{
-			tft.setAddrWindowRect(x, y, size * 4, size);
-			size *= size;
-		}
-		else if (mode == 2)
-		{
-			tft.setAddrWindowRect(x, y, size * 4, 1);
+			ts.read();
+			data[0] = ts.TP_X;
+			data[1] = ts.TP_Y;
 		}
 		else
 		{
-			tft.setAddrWindowRect(x, y, 1, size * 4);
+			data[0] = -1;
+			data[1] = -1;
 		}
-
-		for (; size; size--)
+		Serial.write((uint8_t*)data, 4);
+	}
+	else
+	{
+		while (Serial.available() < 4);
+		x = Serial.read() + Serial.read() * 256;
+		y = Serial.read();
+		size = Serial.read() + 1;
+		if (mode == 0)
 		{
 			while (Serial.available() < 2);
-			uint16_t color = Serial.read() + Serial.read() * 256;
-			tft.pushColor(color);
-			tft.pushColor(color);
-			tft.pushColor(color);
-			tft.pushColor(color);
+			tft.fillRect(x, y, size, size, Serial.read() + Serial.read() * 256);
+		}
+		else
+		{
+			if (mode == 1)
+			{
+				tft.setAddrWindowRect(x, y, size * 4, size);
+				size *= size;
+			}
+			else if (mode == 2)
+			{
+				tft.setAddrWindowRect(x, y, size * 4, 1);
+			}
+			else
+			{
+				tft.setAddrWindowRect(x, y, 1, size * 4);
+			}
+
+			for (; size; size--)
+			{
+				while (Serial.available() < 2);
+				uint16_t color = Serial.read() + Serial.read() * 256;
+				tft.pushColor(color);
+				tft.pushColor(color);
+				tft.pushColor(color);
+				tft.pushColor(color);
+			}
 		}
 	}
 }
