@@ -18,19 +18,18 @@
 ILI9341_due tft(TFT_CS, TFT_DC);
 URTouch ts(T_CLK, T_CS, T_MOSI, T_MISO, T_IRQ);
 
-unsigned long timeToSendTouch;
+bool portrait = false;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
 	Serial.begin(500000);
 	tft.begin();
 	tft.setRotation(iliRotation90);
-	tft.fillScreen(tft.color565(127, 127, 127));
 	ts.InitTouch(LANDSCAPE);
 	ts.setPrecision(PREC_LOW);
 	pinMode(13, OUTPUT);
 	digitalWrite(13, LOW);
-	timeToSendTouch = millis() + 100;
+	tft.fillScreen(tft.color565(127, 127, 127));
 }
 
 // the loop function runs over and over again until power down or reset
@@ -41,7 +40,7 @@ void loop() {
 	while (Serial.available() < 1);
 	mode = Serial.read();
 
-	if (mode == 128)
+	if (mode == 'T')
 	{
 		int16_t data[2];
 		if (ts.dataAvailable())
@@ -57,33 +56,40 @@ void loop() {
 		}
 		Serial.write((uint8_t*)data, 4);
 	}
+	else if (mode == 'L')
+	{
+		tft.setRotation(iliRotation90);
+		portrait = false;
+	}
+	else if (mode == 'P')
+	{
+		tft.setRotation(iliRotation0);
+		portrait = true;
+	}
 	else
 	{
-		while (Serial.available() < 4);
-		x = Serial.read() + Serial.read() * 256;
-		y = Serial.read();
+		if (portrait)
+		{
+			while (Serial.available() < 4);
+			y = Serial.read() + Serial.read() * 256;
+			x = Serial.read();
+		}
+		else
+		{
+			while (Serial.available() < 4);
+			x = Serial.read() + Serial.read() * 256;
+			y = Serial.read();
+		}
 		size = Serial.read() + 1;
-		if (mode == 0)
+		if (mode == '0')
 		{
 			while (Serial.available() < 2);
 			tft.fillRect(x, y, size, size, Serial.read() + Serial.read() * 256);
 		}
 		else
 		{
-			if (mode == 1)
-			{
-				tft.setAddrWindowRect(x, y, size * 4, size);
-				size *= size;
-			}
-			else if (mode == 2)
-			{
-				tft.setAddrWindowRect(x, y, size * 4, 1);
-			}
-			else
-			{
-				tft.setAddrWindowRect(x, y, 1, size * 4);
-			}
-
+			tft.setAddrWindowRect(x, y, size * 4, size);
+			size *= size;
 			for (; size; size--)
 			{
 				while (Serial.available() < 2);
