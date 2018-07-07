@@ -86,6 +86,19 @@ void loop() {
 			while (Serial.available() < 2);
 			tft.fillRect(x, y, size, size, Serial.read() + Serial.read() * 256);
 		}
+		else if (mode >= '3')
+		{
+			tft.setAddrWindowRect(x, y, 2, size * 2);
+			for (; size; size--)
+			{
+				while (Serial.available() < 2);
+				uint16_t color = Serial.read() + Serial.read() * 256;
+				tft.pushColor(color);
+				tft.pushColor(color);
+				tft.pushColor(color);
+				tft.pushColor(color);
+			}
+		}
 		else
 		{
 			tft.setAddrWindowRect(x, y, size * 4, size);
